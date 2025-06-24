@@ -29,118 +29,182 @@ function App() {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    const res = await fetch('/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    });
+    try {
+      const res = await fetch('/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
 
-    if (!res.ok) {
-      let errorMessage = 'Failed to add order';
+      if (!res.ok) {
+        let errorMessage = 'Failed to add order';
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const errorData = await res.json();
+          errorMessage = errorData.error || errorMessage;
+        }
 
-      // ✅ Safe JSON error parsing
-      const contentType = res.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
-        const errorData = await res.json();
-        errorMessage = errorData.error || errorMessage;
+        throw new Error(errorMessage);
       }
 
-      throw new Error(errorMessage);
+      const listRes = await fetch('/orders');
+      if (!listRes.ok) throw new Error('Failed to fetch orders after adding');
+
+      const ordersList = await listRes.json();
+      setOrders(ordersList);
+      setForm({ order_number: '', product: '', quantity: '', due_date: '' });
+      setError(null);
+    } catch (err) {
+      setError(err.message);
     }
+  };
 
-    // ✅ Fetch updated order list after successful POST
-    const listRes = await fetch('/orders');
-    if (!listRes.ok) throw new Error('Failed to fetch orders after adding');
-
-    const ordersList = await listRes.json();
-    setOrders(ordersList);
-    setForm({ order_number: '', product: '', quantity: '', due_date: '' });
-    setError(null); // Clear previous error
-  } catch (err) {
-    setError(err.message);
-  }
-};
-
-
-  if (error) return <div style={{ color: 'red' }}>Error: {error}</div>;
-  if (!orders) return <div>Loading orders...</div>;
+  if (error) return <div style={{ color: 'red', padding: '20px' }}>Error: {error}</div>;
+  if (!orders) return <div style={{ padding: '20px' }}>Loading orders...</div>;
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>Orders</h1>
+    <div style={styles.page}>
+      <div style={styles.container}>
+        <h1 style={styles.title}>Fast React</h1>
 
-      <form onSubmit={handleSubmit} style={{ marginBottom: '20px' }}>
-        <input
-          name="order_number"
-          placeholder="Order Number"
-          value={form.order_number}
-          onChange={handleChange}
-          required
-        />
-        <input
-          name="product"
-          placeholder="Product"
-          value={form.product}
-          onChange={handleChange}
-          required
-        />
-        <input
-          name="quantity"
-          type="number"
-          placeholder="Quantity"
-          value={form.quantity}
-          onChange={handleChange}
-          required
-        />
-        <input
-          name="due_date"
-          type="date"
-          value={form.due_date}
-          onChange={handleChange}
-          required
-        />
-        <button type="submit">Add Order</button>
-      </form>
+        <form onSubmit={handleSubmit} style={styles.form}>
+          <input
+            name="order_number"
+            placeholder="Order Number"
+            value={form.order_number}
+            onChange={handleChange}
+            required
+            style={styles.input}
+          />
+          <input
+            name="product"
+            placeholder="Product"
+            value={form.product}
+            onChange={handleChange}
+            required
+            style={styles.input}
+          />
+          <input
+            name="quantity"
+            type="number"
+            placeholder="Quantity"
+            value={form.quantity}
+            onChange={handleChange}
+            required
+            style={styles.input}
+          />
+          <input
+            name="due_date"
+            type="date"
+            value={form.due_date}
+            onChange={handleChange}
+            required
+            style={styles.input}
+          />
+          <button type="submit" style={styles.button}>➕ Add Order</button>
+        </form>
 
-      <table style={{ borderCollapse: 'collapse', width: '100%' }}>
-        <thead>
-          <tr>
-            <th style={thStyle}>ID</th>
-            <th style={thStyle}>Order Number</th>
-            <th style={thStyle}>Product</th>
-            <th style={thStyle}>Quantity</th>
-            <th style={thStyle}>Due Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          {orders.map(order => (
-            <tr key={order.id}>
-              <td style={tdStyle}>{order.id}</td>
-              <td style={tdStyle}>{order.order_number}</td>
-              <td style={tdStyle}>{order.product}</td>
-              <td style={tdStyle}>{order.quantity}</td>
-              <td style={tdStyle}>{order.due_date}</td>
+        <table style={styles.table}>
+          <thead>
+            <tr>
+              <th style={styles.th}>ID</th>
+              <th style={styles.th}>Order #</th>
+              <th style={styles.th}>Product</th>
+              <th style={styles.th}>Qty</th>
+              <th style={styles.th}>Due Date</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {orders.map(order => (
+              <tr key={order.id} style={styles.tr}>
+                <td style={styles.td}>{order.id}</td>
+                <td style={styles.td}>{order.order_number}</td>
+                <td style={styles.td}>{order.product}</td>
+                <td style={styles.td}>{order.quantity}</td>
+                <td style={styles.td}>{order.due_date}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
 
-const thStyle = {
-  border: '1px solid #ccc',
-  padding: '8px',
-  backgroundColor: '#f4f4f4',
-  textAlign: 'left',
-};
-
-const tdStyle = {
-  border: '1px solid #ccc',
-  padding: '8px',
+const styles = {
+  page: {
+    background: 'linear-gradient(to right, #fbc2eb, #a6c1ee)',
+    minHeight: '100vh',
+    padding: '40px 60px',
+  },
+  container: {
+    width: '50%',
+    backgroundColor: '#ffffffee',
+    borderRadius: '16px',
+    boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
+    padding: '30px',
+    fontFamily: 'Segoe UI, sans-serif',
+  },
+  title: {
+    textAlign: 'left',
+    marginBottom: '24px',
+    color: '#5b3cc4',
+    fontSize: '26px',
+    fontWeight: 'bold',
+  },
+  form: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '12px',
+    justifyContent: 'space-between',
+    marginBottom: '30px',
+  },
+  input: {
+    flex: '1 1 45%',
+    padding: '10px',
+    borderRadius: '8px',
+    border: '1px solid #ccc',
+    fontSize: '14px',
+    backgroundColor: '#fffef6',
+    boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)',
+  },
+  button: {
+    width: '100%',
+    background: 'linear-gradient(to right, #ff758c, #ff7eb3)',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    padding: '12px',
+    fontWeight: 'bold',
+    fontSize: '15px',
+    cursor: 'pointer',
+    transition: '0.3s',
+  },
+  table: {
+    width: '100%',
+    borderCollapse: 'collapse',
+    fontSize: '13.5px',
+    backgroundColor: '#fff',
+    borderRadius: '10px',
+    overflow: 'hidden',
+  },
+  th: {
+    backgroundColor: '#5b3cc4',
+    color: 'white',
+    padding: '10px',
+    textAlign: 'left',
+  },
+  td: {
+    padding: '10px',
+    borderBottom: '1px solid #f3f3f3',
+    backgroundColor: '#ffffff',
+    color: '#333',
+  },
+  tr: {
+    transition: 'background 0.2s',
+  },
 };
 
 export default App;
