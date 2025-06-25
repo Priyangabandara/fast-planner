@@ -45,7 +45,6 @@ function App() {
           const errorData = await res.json();
           errorMessage = errorData.error || errorMessage;
         }
-
         throw new Error(errorMessage);
       }
 
@@ -64,70 +63,88 @@ function App() {
   if (error) return <div style={{ color: 'red', padding: '20px' }}>Error: {error}</div>;
   if (!orders) return <div style={{ padding: '20px' }}>Loading orders...</div>;
 
+  // Sort orders by due_date ascending for tiles display
+  const sortedOrdersByDueDate = [...orders].sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
+
   return (
     <div style={styles.page}>
-      <div style={styles.container}>
-        <h1 style={styles.title}>Fast React</h1>
+      <div style={styles.mainContainer}>
+        <div style={styles.container}>
+          <h1 style={styles.title}>Fast React</h1>
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <input
-            name="order_number"
-            placeholder="Order Number"
-            value={form.order_number}
-            onChange={handleChange}
-            required
-            style={styles.input}
-          />
-          <input
-            name="product"
-            placeholder="Product"
-            value={form.product}
-            onChange={handleChange}
-            required
-            style={styles.input}
-          />
-          <input
-            name="quantity"
-            type="number"
-            placeholder="Quantity"
-            value={form.quantity}
-            onChange={handleChange}
-            required
-            style={styles.input}
-          />
-          <input
-            name="due_date"
-            type="date"
-            value={form.due_date}
-            onChange={handleChange}
-            required
-            style={styles.input}
-          />
-          <button type="submit" style={styles.button}>➕ Add Order</button>
-        </form>
+          <form onSubmit={handleSubmit} style={styles.form}>
+            <input
+              name="order_number"
+              placeholder="Order Number"
+              value={form.order_number}
+              onChange={handleChange}
+              required
+              style={styles.input}
+            />
+            <input
+              name="product"
+              placeholder="Product"
+              value={form.product}
+              onChange={handleChange}
+              required
+              style={styles.input}
+            />
+            <input
+              name="quantity"
+              type="number"
+              placeholder="Quantity"
+              value={form.quantity}
+              onChange={handleChange}
+              required
+              style={styles.input}
+            />
+            <input
+              name="due_date"
+              type="date"
+              value={form.due_date}
+              onChange={handleChange}
+              required
+              style={styles.input}
+            />
+            <button type="submit" style={styles.button}>➕ Add Order</button>
+          </form>
 
-        <table style={styles.table}>
-          <thead>
-            <tr>
-              <th style={styles.th}>ID</th>
-              <th style={styles.th}>Order #</th>
-              <th style={styles.th}>Product</th>
-              <th style={styles.th}>Qty</th>
-              <th style={styles.th}>Due Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map(order => (
-              <tr key={order.id} style={styles.tr}>
-                <td style={styles.td}>{order.id}</td>
-                <td style={styles.td}>{order.order_number}</td>
-                <td style={styles.td}>{order.product}</td>
-                <td style={styles.td}>{order.quantity}</td>
-                <td style={styles.td}>{order.due_date}</td>
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                <th style={styles.th}>ID</th>
+                <th style={styles.th}>Order #</th>
+                <th style={styles.th}>Product</th>
+                <th style={styles.th}>Qty</th>
+                <th style={styles.th}>Due Date</th>
               </tr>
+            </thead>
+            <tbody>
+              {orders.map(order => (
+                <tr key={order.id} style={styles.tr}>
+                  <td style={styles.td}>{order.id}</td>
+                  <td style={styles.td}>{order.order_number}</td>
+                  <td style={styles.td}>{order.product}</td>
+                  <td style={styles.td}>{order.quantity}</td>
+                  <td style={styles.td}>{order.due_date}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Right side tile panel */}
+        <div style={styles.tilePanel}>
+          <h2 style={styles.tileTitle}>Orders by Due Date</h2>
+          <div style={styles.tileContainer}>
+            {sortedOrdersByDueDate.map(order => (
+              <div key={order.id} style={styles.tile}>
+                <div style={styles.tileOrderNumber}>{order.order_number}</div>
+                <div style={styles.tileDueDate}>{order.due_date}</div>
+              </div>
             ))}
-          </tbody>
-        </table>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -138,6 +155,13 @@ const styles = {
     background: 'linear-gradient(to right, #fbc2eb, #a6c1ee)',
     minHeight: '100vh',
     padding: '40px 60px',
+    fontFamily: 'Segoe UI, sans-serif',
+  },
+  mainContainer: {
+    display: 'flex',
+    gap: '30px',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
   },
   container: {
     width: '50%',
@@ -145,7 +169,6 @@ const styles = {
     borderRadius: '16px',
     boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
     padding: '30px',
-    fontFamily: 'Segoe UI, sans-serif',
   },
   title: {
     textAlign: 'left',
@@ -204,6 +227,48 @@ const styles = {
   },
   tr: {
     transition: 'background 0.2s',
+  },
+
+  // Right side tiles styles
+  tilePanel: {
+    width: '30%',
+    backgroundColor: '#ffffffee',
+    borderRadius: '16px',
+    boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
+    padding: '20px',
+    maxHeight: '80vh',
+    overflowY: 'auto',
+  },
+  tileTitle: {
+    fontSize: '22px',
+    fontWeight: '600',
+    color: '#5b3cc4',
+    marginBottom: '16px',
+  },
+  tileContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+  },
+  tile: {
+    background: '#5b3cc4',
+    color: 'white',
+    padding: '14px 18px',
+    borderRadius: '10px',
+    boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+    fontWeight: '600',
+    fontSize: '16px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  tileOrderNumber: {
+    flex: 1,
+  },
+  tileDueDate: {
+    marginLeft: '10px',
+    fontSize: '14px',
+    opacity: 0.8,
   },
 };
 
